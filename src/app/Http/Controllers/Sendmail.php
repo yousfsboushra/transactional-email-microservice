@@ -14,18 +14,20 @@ class Sendmail extends Controller
         $contentType = (!empty($request->contentType))? $request->contentType : "";
         $message = (!empty($request->message))? $request->message : "";
 
+        $result = $this->executeSendmail($recipients, $subject, $message, $from, $contentType);
+        return response()->json($result['response'], $result['status']);
+    }
+    public function executeSendmail($recipients, $subject, $message, $from, $contentType){
         $mailservices = array(
             'sendgrid',
             'mailjet'
         );
-        
         foreach($mailservices as $mailservice){
             if($this->{$mailservice}($recipients, $subject, $message, $from, $contentType)){
-                return "Mails were sent successfully by ${mailservice}";
+                return array('response' => array("message" => "Mails were sent successfully by ${mailservice}"), 'status' => '200');
             }
         }
-        
-        return "Mails couldn't be sent by any mail service";
+        return array('response' => array("error" => "Mails couldn't be sent by any mail service"), 'status' => '500');
     }
     public function sendgrid($recipients, $subject, $message, $from, $contentType){
         $email = new \SendGrid\Mail\Mail(); 
