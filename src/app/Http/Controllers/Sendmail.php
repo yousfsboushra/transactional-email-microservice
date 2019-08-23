@@ -8,53 +8,78 @@ use Mailjet\Resources;
 class Sendmail extends Controller
 {
     public function sendmail(){
-        echo "welcome to send mail";
-        // $this->sendgrid();
-        $this->mailjet();
-    }
-    public function sendgrid(){
-        $email = new \SendGrid\Mail\Mail(); 
-        $email->setFrom("test@example.com", "Example User");
-        $email->setSubject("Sending with SendGrid is Fun");
-        $email->addTo("yousefsboushra@gmail.com", "Yousef");
-        $email->addContent("text/plain", "and easy to do anywhere, even with PHP");
-        $email->addContent(
-            "text/html", "<strong>and easy to do anywhere, even with PHP</strong>"
+        $to = "yousefsboushra@gmail.com";
+        $from = "yousefsboushra@gmail.com";
+        $subject = "Time for Takeaway.com";
+        $contentType = "html";
+        $message = '<a href="https://www.takeaway.com">Takeaway.com</a> is a leading online food delivery marketplace, focused on connecting consumers and restaurants through its platform in 10 European countries and Israel. <a href="https://www.takeaway.com">Takeaway.com</a> offers an online marketplace where supply and demand for food delivery and ordering meet.';
+
+        $mailservices = array(
+            'sendgrid',
+            'mailjet'
         );
+        foreach($mailservices as $mailservice){
+            if($this->{$mailservice}($to, $subject, $message, $from, $contentType)){
+                return "Mail was sent successfully by ${mailservice}";
+            }
+        }
+        return "Mail couldn't be sent by any mail service";
+    }
+    public function sendgrid($to, $subject, $message, $from, $contentType){
+        $email = new \SendGrid\Mail\Mail(); 
+        $email->setFrom($from);
+        $email->setSubject($subject);
+        $email->addTo($to);
+        if($contentType === "html"){
+            $email->addContent("text/html", $message);            
+        }else{
+            $email->addContent("text/plain", strip_tags($message));        
+        }
         $sendgrid = new \SendGrid(getenv('SENDGRID_API_KEY'));
         try {
             $response = $sendgrid->send($email);
-            print $response->statusCode() . "\n";
-            print_r($response->headers());
-            print $response->body() . "\n";
+            return true;
         } catch (Exception $e) {
-            echo 'Caught exception: '. $e->getMessage() ."\n";
+            error_log('SENDGRID: '. $e->getMessage());
         }
+        return false;
     }
 
-    public function mailjet(){
-        $mj = new \Mailjet\Client('db239066c296aee297f7e64a14465c24','ad89564bd124fc9c448e99a1ecf42f56',true,['version' => 'v3.1']);
-        $body = [
-            'Messages' => [
-            [
-                'From' => [
-                'Email' => "yousefsboushra@gmail.com",
-                'Name' => "Yousef"
-                ],
-                'To' => [
-                [
-                    'Email' => "yousefsboushra@gmail.com",
-                    'Name' => "Yousef"
-                ]
-                ],
-                'Subject' => "Greetings from Mailjet.",
-                'TextPart' => "My first Mailjet email",
-                'HTMLPart' => "<h3>Dear passenger 1, welcome to <a href='https://www.mailjet.com/'>Mailjet</a>!</h3><br />May the delivery force be with you!",
-                'CustomID' => "AppGettingStartedTest"
-            ]
-            ]
-        ];
+    public function mailjet($to, $subject, $message, $from, $contentType){
+        $mj = new \Mailjet\Client(getenv('MAILJET_USERNAME'),getenv('MAILJET_PASSWORD'),true,['version' => 'v3.1']);
+        $body = array(
+            'Messages' => array(
+                array(
+                    'From' => array(
+                        'Email' => $from
+                    ),
+                    'To' => array(
+                        array(
+                            'Email' => $to
+                        )
+                    ),
+                    'Subject' => $subject
+                )
+            )
+        );
+        if($contentType === "html"){
+            $body['Messages'][0]['HTMLPart'] = $message;
+        }else{
+            $body['Messages'][0]['TextPart'] = strip_tags($message);
+        }
+        
         $response = $mj->post(Resources::$Email, ['body' => $body]);
-        $response->success() && var_dump($response->getData());
+        $response->success();
+        $result = $response->getData();
+
+        if(isset($result['Messages'][0]['Status'])){
+            if($result['Messages'][0]['Status'] === "success"){
+                return true;
+            }else if(isset($result['Messages'][0]['Errors'][0]['ErrorMessage'])){
+                error_log('MAILJET: '. $result['Messages'][0]['Errors'][0]['ErrorMessage']);
+                return false;
+            }
+        }
+        return false;
     }
 }
