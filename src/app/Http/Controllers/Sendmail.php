@@ -8,7 +8,10 @@ use Mailjet\Resources;
 class Sendmail extends Controller
 {
     public function sendmail(){
-        $to = "yousefsboushra@gmail.com";
+        $recipients = array(
+            "yousefsboushra@gmail.com",
+            "yousef.samir@coformatique.com"
+        );
         $from = "yousefsboushra@gmail.com";
         $subject = "Time for Takeaway.com";
         $contentType = "html";
@@ -19,17 +22,19 @@ class Sendmail extends Controller
             'mailjet'
         );
         foreach($mailservices as $mailservice){
-            if($this->{$mailservice}($to, $subject, $message, $from, $contentType)){
+            if($this->{$mailservice}($recipients, $subject, $message, $from, $contentType)){
                 return "Mail was sent successfully by ${mailservice}";
             }
         }
         return "Mail couldn't be sent by any mail service";
     }
-    public function sendgrid($to, $subject, $message, $from, $contentType){
+    public function sendgrid($recipients, $subject, $message, $from, $contentType){
         $email = new \SendGrid\Mail\Mail(); 
         $email->setFrom($from);
         $email->setSubject($subject);
-        $email->addTo($to);
+        foreach($recipients as $recipient){
+            $email->addTo($recipient);
+        }
         if($contentType === "html"){
             $email->addContent("text/html", $message);            
         }else{
@@ -45,7 +50,7 @@ class Sendmail extends Controller
         return false;
     }
 
-    public function mailjet($to, $subject, $message, $from, $contentType){
+    public function mailjet($recipients, $subject, $message, $from, $contentType){
         $mj = new \Mailjet\Client(getenv('MAILJET_USERNAME'),getenv('MAILJET_PASSWORD'),true,['version' => 'v3.1']);
         $body = array(
             'Messages' => array(
@@ -53,15 +58,15 @@ class Sendmail extends Controller
                     'From' => array(
                         'Email' => $from
                     ),
-                    'To' => array(
-                        array(
-                            'Email' => $to
-                        )
-                    ),
                     'Subject' => $subject
                 )
             )
         );
+        foreach($recipients as $recipient){
+            $body['Messages'][0]['To'][] = array(
+                'Email' => $recipient
+            );
+        }
         if($contentType === "html"){
             $body['Messages'][0]['HTMLPart'] = $message;
         }else{
