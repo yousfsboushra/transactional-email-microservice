@@ -7,26 +7,25 @@ use Mailjet\Resources;
 
 class Sendmail extends Controller
 {
-    public function sendmail(){
-        $recipients = array(
-            "yousefsboushra@gmail.com",
-            "yousef.samir@coformatique.com"
-        );
-        $from = "yousefsboushra@gmail.com";
-        $subject = "Time for Takeaway.com";
-        $contentType = "html";
-        $message = '<a href="https://www.takeaway.com">Takeaway.com</a> is a leading online food delivery marketplace, focused on connecting consumers and restaurants through its platform in 10 European countries and Israel. <a href="https://www.takeaway.com">Takeaway.com</a> offers an online marketplace where supply and demand for food delivery and ordering meet.';
+    public function sendmail(Request $request){
+        $recipients = (!empty($request->recipients))? $request->recipients : array();
+        $from = (!empty($request->from))? $request->from : "";
+        $subject = (!empty($request->subject))? $request->subject : "";
+        $contentType = (!empty($request->contentType))? $request->contentType : "";
+        $message = (!empty($request->message))? $request->message : "";
 
         $mailservices = array(
             'sendgrid',
             'mailjet'
         );
+        
         foreach($mailservices as $mailservice){
             if($this->{$mailservice}($recipients, $subject, $message, $from, $contentType)){
-                return "Mail was sent successfully by ${mailservice}";
+                return "Mails were sent successfully by ${mailservice}";
             }
         }
-        return "Mail couldn't be sent by any mail service";
+        
+        return "Mails couldn't be sent by any mail service";
     }
     public function sendgrid($recipients, $subject, $message, $from, $contentType){
         $email = new \SendGrid\Mail\Mail(); 
