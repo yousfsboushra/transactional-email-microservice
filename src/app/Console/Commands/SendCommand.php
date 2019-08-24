@@ -41,7 +41,7 @@ class SendCommand extends Command
         $inputs = $this->collectInputs();
 
         $mailer = new Sendmail();
-        $res = $mailer->executeSendmail($inputs['recipients'], $inputs['subject'], $inputs['message'], $inputs['from'], $inputs['contentType']);
+        $res = $mailer->cliEntry($inputs['recipients'], $inputs['subject'], $inputs['message'], $inputs['from'], $inputs['contentType']);
         if(isset($res['status']) && $res['status'] === "500"){
             $this->error($res['response']['error']);
         }else{

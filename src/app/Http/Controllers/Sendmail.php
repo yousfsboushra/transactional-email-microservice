@@ -4,32 +4,52 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Mailjet\Resources;
+use App\Models\Email;
 
 class Sendmail extends Controller
 {
-    public function sendmail(Request $request){
+    // JSON API entry function
+    public function apiEntry(Request $request){
         $recipients = (!empty($request->recipients))? $request->recipients : array();
         $from = (!empty($request->from))? $request->from : "";
         $subject = (!empty($request->subject))? $request->subject : "";
         $contentType = (!empty($request->contentType))? $request->contentType : "";
         $message = (!empty($request->message))? $request->message : "";
 
-        $result = $this->executeSendmail($recipients, $subject, $message, $from, $contentType);
-        return response()->json($result['response'], $result['status']);
+        $this->addEmail($recipients, $subject, $message, $from, $contentType);
     }
-    public function executeSendmail($recipients, $subject, $message, $from, $contentType){
-        $mailservices = array(
-            'sendgrid',
-            'mailjet'
-        );
-        foreach($mailservices as $mailservice){
-            if($this->{$mailservice}($recipients, $subject, $message, $from, $contentType)){
-                return array('response' => array("message" => "Mails were sent successfully by ${mailservice}"), 'status' => '200');
-            }
-        }
-        return array('response' => array("error" => "Mails couldn't be sent by any mail service"), 'status' => '500');
+
+    // CLI entry function
+    public function cliEntry($recipients, $subject, $message, $from, $contentType){
+        $this->addEmail($recipients, $subject, $message, $from, $contentType);
     }
-    public function sendgrid($recipients, $subject, $message, $from, $contentType){
+
+    // Add email to the database
+    private function addEmail($recipients, $subject, $message, $from, $contentType){
+        $email = new Email();
+        $email->recipients = implode(",", $recipients);
+        $email->from = $from;
+        $email->subject = $subject;
+        $email->content_type = $contentType;
+        $email->message = $message;
+        return $email->save();
+    }
+
+    // public function executeSendmail($recipients, $subject, $message, $from, $contentType){
+    //     $mailservices = array(
+    //         'sendgrid',
+    //         'mailjet'
+    //     );
+    //     foreach($mailservices as $mailservice){
+    //         if($this->{$mailservice}($recipients, $subject, $message, $from, $contentType)){
+    //             return array('response' => array("message" => "Mails were sent successfully by ${mailservice}"), 'status' => '200');
+    //         }
+    //     }
+    //     return array('response' => array("error" => "Mails couldn't be sent by any mail service"), 'status' => '500');
+    // }
+    
+    // Send mail via sendgrid
+    private function sendgrid($recipients, $subject, $message, $from, $contentType){
         $email = new \SendGrid\Mail\Mail(); 
         $email->setFrom($from);
         $email->setSubject($subject);
@@ -51,7 +71,8 @@ class Sendmail extends Controller
         return false;
     }
 
-    public function mailjet($recipients, $subject, $message, $from, $contentType){
+    // Send mail via mailjet
+    private function mailjet($recipients, $subject, $message, $from, $contentType){
         $mj = new \Mailjet\Client(getenv('MAILJET_USERNAME'),getenv('MAILJET_PASSWORD'),true,['version' => 'v3.1']);
         $body = array(
             'Messages' => array(

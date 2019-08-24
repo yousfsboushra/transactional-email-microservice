@@ -15,4 +15,4 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-$router->post("sendmail", "Sendmail@sendmail");
+$router->post("sendmail", "Sendmail@apiEntry");
