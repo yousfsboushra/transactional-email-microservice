@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Mailjet\Resources;
 use App\Models\Email;
+use App\Jobs\SendEmailJob;
 
 class Sendmail extends Controller
 {
@@ -16,12 +17,31 @@ class Sendmail extends Controller
         $contentType = (!empty($request->contentType))? $request->contentType : "";
         $message = (!empty($request->message))? $request->message : "";
 
-        $this->addEmail($recipients, $subject, $message, $from, $contentType);
+        $emailId = $this->addEmail($recipients, $subject, $message, $from, $contentType);
+        $job = new SendEmailJob($emailId, $recipients, $subject, $message, $from, $contentType);
+        $this->dispatch($job->onQueue('emails'));
     }
 
     // CLI entry function
     public function cliEntry($recipients, $subject, $message, $from, $contentType){
-        $this->addEmail($recipients, $subject, $message, $from, $contentType);
+        $emailId = $this->addEmail($recipients, $subject, $message, $from, $contentType);
+        $job = new SendEmailJob($emailId, $recipients, $subject, $message, $from, $contentType);
+        $this->dispatch($job->onQueue('emails'));
+    }
+
+    // Send email
+    public function executeSendmail($recipients, $subject, $message, $from, $contentType){
+        $mailservices = array(
+            'sendgrid',
+            'mailjet',
+            
+        );
+        foreach($mailservices as $mailservice){
+            if($this->{$mailservice}($recipients, $subject, $message, $from, $contentType)){
+                return array('response' => array("message" => "Mails were sent successfully by ${mailservice}"), 'service' => $mailservice, 'status' => '200');
+            }
+        }
+        return array('response' => array("message" => "Mails couldn't be sent by any mail service"), 'status' => '500');
     }
 
     // Add email to the database
@@ -32,21 +52,11 @@ class Sendmail extends Controller
         $email->subject = $subject;
         $email->content_type = $contentType;
         $email->message = $message;
-        return $email->save();
+        if($email->save()){
+            return $email->id;
+        }
+        return 0;
     }
-
-    // public function executeSendmail($recipients, $subject, $message, $from, $contentType){
-    //     $mailservices = array(
-    //         'sendgrid',
-    //         'mailjet'
-    //     );
-    //     foreach($mailservices as $mailservice){
-    //         if($this->{$mailservice}($recipients, $subject, $message, $from, $contentType)){
-    //             return array('response' => array("message" => "Mails were sent successfully by ${mailservice}"), 'status' => '200');
-    //         }
-    //     }
-    //     return array('response' => array("error" => "Mails couldn't be sent by any mail service"), 'status' => '500');
-    // }
     
     // Send mail via sendgrid
     private function sendgrid($recipients, $subject, $message, $from, $contentType){
