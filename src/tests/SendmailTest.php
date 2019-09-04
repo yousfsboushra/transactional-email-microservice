@@ -94,4 +94,23 @@ class SendmailTest extends TestCase
         ]);
     }
 
+    public function testApiWithAllFields()
+    {
+        $this->post('/sendmail', [
+            "recipients" => [
+                "yousefsboushra@gmail.com"
+            ],
+            "from" => "yousefsboushra@gmail.com",
+            "subject" => "Time for Takeaway.com",
+            "contentType" => "html",
+            "message" => "<a href=\"https://www.takeaway.com\">Takeaway.com</a> is a leading online food delivery marketplace, focused on connecting consumers and restaurants through its platform in 10 European countries and Israel. <a href=\"https://www.takeaway.com\">Takeaway.com</a> offers an online marketplace where supply and demand for food delivery and ordering meet."
+        ])
+        ->seeJsonEquals([
+            "response" => [
+                "message" => "Mail was added to the queue",
+                "status" => "success"
+            ]
+        ]);
+    }
+
 }
