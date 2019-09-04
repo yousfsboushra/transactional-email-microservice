@@ -33,4 +33,65 @@ class SendmailTest extends TestCase
             "message" => ["The message field is required."]
         ]);
     }
+
+    public function testApiWithRecipientsOnly()
+    {
+        $this->post('/sendmail', [
+            "recipients" => [
+                "yousefsboushra@gmail.com"
+            ]
+        ])
+        ->seeJsonEquals([
+            "from" => ["The from field is required."],
+            "subject" => ["The subject field is required."],
+            "contentType" => ["The content type field is required."],
+            "message" => ["The message field is required."]
+        ]);
+    }
+
+    public function testApiWithRecipientsAndFromOnly()
+    {
+        $this->post('/sendmail', [
+            "recipients" => [
+                "yousefsboushra@gmail.com"
+            ],
+            "from" => "yousefsboushra@gmail.com",
+        ])
+        ->seeJsonEquals([
+            "subject" => ["The subject field is required."],
+            "contentType" => ["The content type field is required."],
+            "message" => ["The message field is required."]
+        ]);
+    }
+
+    public function testApiWithRecipientsFromAndSubjectOnly()
+    {
+        $this->post('/sendmail', [
+            "recipients" => [
+                "yousefsboushra@gmail.com"
+            ],
+            "from" => "yousefsboushra@gmail.com",
+            "subject" => "Time for Takeaway.com",
+        ])
+        ->seeJsonEquals([
+            "contentType" => ["The content type field is required."],
+            "message" => ["The message field is required."]
+        ]);
+    }
+
+    public function testApiWithRecipientsFromSubjectAndTypeOnly()
+    {
+        $this->post('/sendmail', [
+            "recipients" => [
+                "yousefsboushra@gmail.com"
+            ],
+            "from" => "yousefsboushra@gmail.com",
+            "subject" => "Time for Takeaway.com",
+            "contentType" => "html",
+        ])
+        ->seeJsonEquals([
+            "message" => ["The message field is required."]
+        ]);
+    }
+
 }
