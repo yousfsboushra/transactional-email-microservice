@@ -11,6 +11,13 @@ class Sendmail extends Controller
 {
     // JSON API entry function
     public function apiEntry(Request $request){
+        $this->validate($request, [
+            'recipients' => 'required',
+            'from' => 'required|email',
+            'subject' => 'required',
+            'contentType' => 'required',
+            'message' => 'required'
+        ]);
         $recipients = (!empty($request->recipients))? $request->recipients : array();
         $from = (!empty($request->from))? $request->from : "";
         $subject = (!empty($request->subject))? $request->subject : "";
