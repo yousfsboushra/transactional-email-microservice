@@ -3,6 +3,8 @@
 ## Docker
 - I tried many docker images and found that https://github.com/lephleg/laravel-lumen-docker is the fastest one to establish an environment for lumen development.
 
+- You need to add this line to your hosts file `127.0.0.1 mysql` So  that CLI can access the database
+
 - I used https://packagist.org/packages/flipbox/lumen-generator to add more commands
 
 ## JSON API
