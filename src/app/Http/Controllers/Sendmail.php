@@ -42,6 +42,12 @@ class Sendmail extends Controller
         $emailId = $this->addEmail($recipients, $subject, $message, $from, $contentType);
         $job = new SendEmailJob($emailId, $recipients, $subject, $message, $from, $contentType);
         $this->dispatch($job->onQueue('emails'));
+
+        if($job){
+            echo "Mail was added to the queue";
+        }else{
+            echo "Mail was not added to the queue";
+        }
     }
 
     // Send email
