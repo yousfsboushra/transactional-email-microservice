@@ -7,6 +7,9 @@
 
 - I used https://packagist.org/packages/flipbox/lumen-generator to add more commands
 
+
+- You should run the command `php artisan queue:work --queue=emails --tries=3` to execute jobs
+
 ## JSON API
 - URL: `http://localhost/sendmail`
 - Method: `POST`
