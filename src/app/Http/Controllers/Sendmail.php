@@ -59,10 +59,10 @@ class Sendmail extends Controller
         );
         foreach($mailservices as $mailservice){
             if($this->{$mailservice}($recipients, $subject, $message, $from, $contentType)){
-                return array('response' => array("message" => "Mails were sent successfully by ${mailservice}"), 'service' => $mailservice, 'status' => '200');
+                return array('response' => array("message" => "Mails were sent successfully by ${mailservice}"), 'service' => $mailservice, 'status' => 'success');
             }
         }
-        return array('response' => array("message" => "Mails couldn't be sent by any mail service"), 'status' => '500');
+        return array('response' => array("message" => "Mails couldn't be sent by any mail service"), 'status' => 'error');
     }
 
     // Add email to the database
